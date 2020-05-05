@@ -45,6 +45,8 @@ const INTAKE_SCHEMA = {
   costCategory: 'cost_category',
   foodOptions: 'Food Options',
   otherItems: 'Other Items',
+  daysLeftToComplete: 'Days Left to Complete',
+  priorityGroup: 'Priority Group',
 };
 
 const REIMBURSEMENT_SCHEMA = {
