@@ -12,6 +12,12 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "rewrites": [
+      {
+        "source": "/api-unassignedTickets",
+        "function": "api-unassignedTickets"
+      }
+    ],
     "redirects": [
       {
         "source": "/systems",

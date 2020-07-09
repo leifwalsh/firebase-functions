@@ -33,7 +33,7 @@
       zoom: 13
     });
     map.on('load', () => {
-      const unassignedEndpoint = 'http://localhost:5001/bedstuystrong-automation/us-central1/api-unassignedTickets';
+      const unassignedEndpoint = 'http://localhost:5000/api-unassignedTickets';
       fetch(unassignedEndpoint).then(response => {
         if (!response.ok) {
           throw new Error(response.statusText);

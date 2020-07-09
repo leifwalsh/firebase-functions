@@ -49,8 +49,6 @@ module.exports = {
       await getRecordsWithStatus(INTAKE_TABLE, 'Seeking Volunteer'),
       ([, fields, meta]) => !meta.ignore && fields.geocode,
     );
-    // res.set('Access-Control-Allow-Origin', IS_PROD ? 'https://bedstuystrong.com' : 'http://localhost:5000');
-    res.set('Access-Control-Allow-Origin', 'http://localhost:5000');
     res.json({
       type: 'FeatureCollection',
       features: unassignedTickets.map(ticketToGeojson),
