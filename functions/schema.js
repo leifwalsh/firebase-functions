@@ -95,6 +95,13 @@ const BULK_ORDER_SCHEMA = {
   deliveryDate: 'Bulk Delivery Date',
 };
 
+const ITEM_DIRECTORY_SCHEMA = {
+  name: 'Name',
+  category: 'Category',
+  perishable: 'Perishable',
+  dietaryRestrictions: 'Dietary Restrictions',
+};
+
 const INBOUND_STATUSES = {
   intakeNeeded: 'Intake Needed',
   inProgress: 'In Progress',
@@ -138,6 +145,7 @@ module.exports = {
   INBOUND_STATUSES,
   INTAKE_SCHEMA,
   ITEMS_BY_HOUSEHOLD_SIZE_SCHEMA,
+  ITEM_DIRECTORY_SCHEMA,
   META,
   META_SCHEMA,
   META_STORE_KEYS,

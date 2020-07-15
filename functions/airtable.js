@@ -32,6 +32,7 @@ const REIMBURSEMENTS_TABLE = functions.config().airtable.reimbursements_table;
 const META_TABLE = functions.config().airtable.meta_table;
 const ITEMS_BY_HOUSEHOLD_SIZE_TABLE = functions.config().airtable.items_by_household_size_table;
 const BULK_ORDER_TABLE = functions.config().airtable.bulk_order_table;
+const ITEM_DIRECTORY_TABLE = functions.config().airtable.item_directory_table;
 
 const TABLE_SCHEMAS = {
   [INBOUND_TABLE]: INBOUND_SCHEMA,
@@ -215,6 +216,15 @@ function getTicketDueDate(fields) {
   );
 }
 
+async function getItemsByHouseholdSize() {
+  return _.fromPairs(
+    _.map(
+      await getAllRecords(ITEMS_BY_HOUSEHOLD_SIZE_TABLE),
+      ([, fields,]) => { return [fields.item, fields]; },
+    ),
+  );
+}
+
 /* BULK ORDER */
 
 // Returns a bulk order for the provided intake records.
@@ -225,12 +235,7 @@ function getTicketDueDate(fields) {
 // - Adjust structured items for household size
 // - Generate item to quanitity mapping
 async function getBulkOrder(records) {
-  const itemsByHouseholdSize = _.fromPairs(
-    _.map(
-      await getAllRecords(ITEMS_BY_HOUSEHOLD_SIZE_TABLE),
-      ([, fields,]) => { return [fields.item, fields]; },
-    ),
-  );
+  const itemsByHouseholdSize = getItemsByHouseholdSize();
 
   const failedToLookup = [];
 
@@ -302,6 +307,7 @@ module.exports = {
   INBOUND_TABLE: INBOUND_TABLE,
   INTAKE_TABLE: INTAKE_TABLE,
   ITEMS_BY_HOUSEHOLD_SIZE_TABLE: ITEMS_BY_HOUSEHOLD_SIZE_TABLE,
+  ITEM_DIRECTORY_TABLE: ITEM_DIRECTORY_TABLE,
   META_STORE_KEYS: META_STORE_KEYS,
   META_TABLE: META_TABLE,
   REIMBURSEMENTS_TABLE: REIMBURSEMENTS_TABLE,
@@ -313,6 +319,7 @@ module.exports = {
   getAllRecords: getAllRecords,
   getBulkOrder: getBulkOrder,
   getChangedRecords: getChangedRecords,
+  getItemsByHouseholdSize: getItemsByHouseholdSize,
   getLastNonDuplicate: getLastNonDuplicate,
   getMeta: getMeta,
   getRecord: getRecord,
