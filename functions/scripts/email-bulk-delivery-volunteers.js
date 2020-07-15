@@ -49,13 +49,13 @@ We've assigned you the following tickets: ${_.join(_.map(cluster, 'ticketID'), '
 
 ### Instructions
 
-This coming Saturday, please come to our warehouse at **[221 Glenmore Ave, Gate 4](${googleMapsUrl('221 Glenmore Ave')}) at 1pm** to pick up your deliveries. Since there are perishables in the deliveries, you'll need to deliver them immediately after pickup. 
+This coming Saturday, please come to our warehouse at **[221 Glenmore Ave, Gate 4](${googleMapsUrl('221 Glenmore Ave')}) at 1pm** to pick up your deliveries. Since there are perishables in the deliveries, you'll need to deliver them immediately after pickup.
 
 You'll load your car with boxes for the above ticket IDs, and then deliver them to the addresses below. You may want to plan your route to Brooklyn Packers and then to the delivery locations in advance.
 
-The neighbors you're delivering to have confirmed their availability for 1-4pm, but you'll call each of them before you leave the warehouse, to get any last minute delivery details. 
+The neighbors you're delivering to have confirmed their availability for 1-4pm, but you'll call each of them before you leave the warehouse, to get any last minute delivery details.
 
-If possible, we recommend printing this email out so you can mark tickets done as you complete them, to fill out the [Completion Form](https://airtable.com/shrvHf4k5lRo0I8F4) at the end. If any issues come up during your deliveries, or you are unable to deliver any of the boxes (because someone isn't home) contact Jackson at (410) 402-3236. We'll help you redistribute the food to the community in another way. 
+If possible, we recommend printing this email out so you can mark tickets done as you complete them, to fill out the [Completion Form](https://airtable.com/shrvHf4k5lRo0I8F4) at the end. If any issues come up during your deliveries, or you are unable to deliver any of the boxes (because someone isn't home) contact Jackson at (410) 402-3236. We'll help you redistribute the food to the community in another way.
 
 ### Checklist
 - [ ] Call the recipients of each ticket to make sure they're available. If they're not, we can use their items for someone else
@@ -98,6 +98,7 @@ If possible, we recommend printing this email out so you can mark tickets done a
   }).join('\n\n----\n');
 
   email += tickets;
+  email += '\nThank you so much!';
 
   const converter = new showdown.Converter({
     tasklists: true,
