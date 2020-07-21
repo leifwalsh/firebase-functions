@@ -3,8 +3,11 @@ const Slack = require('slack');
 const allSettled = require('promise.allsettled');
 const _ = require('lodash');
 const fs = require('fs');
+const showdown = require('showdown');
+const sgMail = require('@sendgrid/mail');
 const {argv} = require('yargs');
 
+sgMail.setApiKey(functions.config().sendgrid.api_key);
 allSettled.shim();
 
 const {
@@ -36,6 +39,7 @@ const {
   getTicketSummaryBlocks,
   getShoppingList,
   renderShoppingList,
+  renderSingleTicketShoppingList,
 } = require('../messages');
 
 async function getOneIntaketicket(ticket) {
@@ -51,10 +55,51 @@ const saveIntakeTicketInfo = async (ticket) => {
   fs.writeFileSync(`${ticket}.json`, JSON.stringify(record));
 };
 
+
+const sendEmail = async (msg) => {
+  try {
+    console.log('Sending message', msg);
+    return await sgMail.send(msg);
+  } catch (error) {
+    console.error(error);
+
+    if (error.response) {
+      console.error(error.response.body);
+    }
+  }
+};
+
 const showShoppingList = async (tickets) => {
   const records = await Promise.all(_.map(tickets.split(','), getOneIntaketicket));
-  const email = await getShoppingList(records);
-  console.log(renderShoppingList(email));
+  const shoppingList = await getShoppingList(records);
+  if (tickets.split(',').length === 1) {
+    const [, fields,] = records[0];
+    var markdown = `**Ticket ID:** ${fields.ticketID}<br/>\n`;
+    markdown += `**Neighbor:** ${fields.requestName} (${fields.nearestIntersection})<br/>\n`;
+    markdown += `**Address:** ${fields.address}<br/>\n`;
+    markdown += `**Phone:** ${fields.phoneNumber}<br/>\n`;
+    markdown += `**Delivery Notes:** ${fields.deliveryNotes}<br/>\n`;
+    if (fields.vulnerability) {
+      markdown += `**Vulnerabilities:** ${fields.vulnerability}<br/>\n`;
+    }
+    markdown += `**Household Size:** ${fields.householdSize}<br/>\n`;
+    markdown += renderSingleTicketShoppingList(shoppingList);
+    markdown += `\n**Other Items:** ${fields.otherItems}\n`
+
+    const converter = new showdown.Converter({ tasklists: true });
+    const html = converter.makeHtml(markdown);
+  
+    const msg = {
+      to: 'leif.walsh@gmail.com',
+      from: functions.config().sendgrid.from,
+      subject: fields.ticketID,
+      text: markdown,
+      html: html,
+    };
+    console.log(await sendEmail(msg));
+  } else {
+    console.log(renderShoppingList(shoppingList));
+  }
 };
 
 const main = async () => {
