@@ -6,86 +6,57 @@ Thank you again for volunteering to help our neighbors.
 listed your tickets in delivery order: {{ticketIDs}}**
 
 **Please arrive at Brooklyn Packers this Saturday, {{deliveryDateString}} at
-{{arrivalTime}} with your custom items already purchased.**
+{{arrivalTime}}.**
 
 Check out the instructions below. If any issues come up day-of, contact this
-week's Dispatcher: Olivia at {{warehouseCoordinatorPhone1}}. Please also contact
+week's Dispatcher: Annika at {{warehouseCoordinatorPhone1}}. Please also contact
 us ASAP if you're experiencing COVID-19 symptoms or have been exposed to someone
 who has. As always, volunteers should wear masks and sanitize their hands
 between deliveries.
 
 ### Saturday Volunteer Instructions
 
-- [ ] **Get ready.** Please bring a pen or marker to the store for labeling
-      bags. We also recommend printing this if you can—it helps to mark off
-      tasks as they are completed.
-- [ ] **Go shopping for custom items.** See the Custom Item Shopping List below
-      for what to purchase. Sort the items into bags by household, and label
-      each bag with the corresponding ticket ID. (They can all be purchased on
-      one receipt, and you will be reimbursed for the purchase).
-- [ ] **Come to the Brooklyn Packers warehouse for pre-packed groceries at
-      {{arrivalTime}}:** [221 Glenmore Ave, Gate 3, Brooklyn, NY
+We recommend printing this if you can---it helps to mark off tasks as they are
+completed!
+
+- [ ] **Come to Brooklyn Packers warehouse for pre-packed groceries at
+      {{arrivalTime}}.** [221 Glenmore Ave, Gate 3, Brooklyn, NY
       11207]({{{warehouseMapsUrl}}})
-      - [ ] Find a spot to park (**please do not park in front of the main
-            driveway**).
-      - [ ] Come to the warehouse and let us know you've arrived (Please observe
-            social distancing at the warehouse, and only send one person per
-            delivery team to check in); the on-site coordinator will give
-            additional information and answer any questions you might have.
+      - [ ] Find a spot to park **(please do not park in front of the main
+            driveway)**.
+      - [ ] Come to the warehouse and let us know you've arrived **(Please
+            observe social distancing at the warehouse, and only send one
+            person per delivery team to check in)**; the on-site coordinator
+            will give additional information and answer any questions you might
+            have.
       - [ ] Hold tight - we'll let you know when your items are ready.
-- [ ] **While you're waiting,** call the recipients of each ticket to confirm
+- [ ] **While you're waiting**, call the recipients of each ticket to confirm
       that someone will be home to accept the delivery. **If you can't reach
-      them,** let the dispatcher know and proceed with delivery. **If you reach
-      them but they won't be home,** let the dispatcher know and we will use
-      their groceries for someone else and deliver to them another time.
-- [ ] **When your items are ready,** pull up closer and we'll bring the pallet
+      them**, let the dispatcher know and proceed with delivery. **If you reach
+      them but they won't be home**, let the dispatcher know and we will use
+      their groceries for someone else and deliver to them another time. 
+- [ ] **When your items are ready**, pull up closer and we'll bring the pallet
       to your car. You'll be given the following for each ticket (these are
       provided at the warehouse and do not need to be purchased):
-      - [ ] Pre-packed groceries (may be multiple bags or boxes per household)
-      - [ ] Cleaning supplies
-      - [ ] Perishables bag
-      - [ ] Warehouse Specialty Items (e.g. Art kits, books, etc.)
-      - [ ] Water
-- [ ] **Please confirm that the ticket IDs on every box and bag match your route
-      number/name.**
+      - [ ] Meat
+      - [ ] Dessert
+      - [ ] Holiday sides (rolls, gravy, beans, etc.)
+      - [ ] Fresh produce box
+- [ ] **Please confirm that the ticket IDs on every box and bag** match your
+      route number/name (ex. RTE 6).
 - [ ] **Load up your car.** We recommend arranging them by route, so the first
       stop is the most accessible.
 - [ ] **Make your deliveries and check off each one as you complete it.** If a
       neighbor gives you a donation, please accept it with gratitude! You can
-      enter the donation amount in the delivery completion form.
-- [ ] **When you're done, fill out the [Delivery Completion
-      Form](https://airtable.com/shrvHf4k5lRo0I8F4).** Please include:
-      - [ ] The total amount you spent
-      - [ ] Images of your receipt(s)
-      - [ ] A note that your reimbursement form is for **custom items shopping for
-            bulk purchasing households on {{deliveryDateString}}**
-
-Thank you!
+      Venmo the amount to Bed-Stuy Strong (full information at
+      [bedstuystrong.com](https://bedstuystrong.com)) and email
+      [operations@bedstuystrong.com](mailto:operations@bedstuystrong.com) if you
+      have any questions.
+- [ ] **When you're done, fill out the [delivery completion
+      form](https://airtable.com/shrqWwFVn2OUkjv77) so we know that you have
+      delivered to all of the neighbors on your route.** Thank you!
 
 ---
-{{#shoppingList}}
-### Custom Item Shopping List
-
-{{#noRouteSection}}
-#### No Route Number
-
-{{#items}}
-- [ ] {{{item}}}
-{{/items}}
-
-{{/noRouteSection}}
-
-{{#tickets}}
-**Ticket {{ticketID}}** ({{conditions}})
-
-{{#items}}
-- [ ] {{quantity}} {{item}}
-{{/items}}
-
----
-{{/tickets}}
-
-{{/shoppingList}}
 ### Tickets (Route {{routeName}})
 {{#tickets}}
 
@@ -97,13 +68,10 @@ Thank you!
 **Address**: [{{address}}]({{{mapsUrl}}})<br/>
 **Phone Number**: [{{phoneNumber}}](tel:+1{{phoneNumberNumbersOnly}})<br/>
 
-**Vulnerabilities**: {{vulnerabilities}}<br/>
 **Household Size**: {{householdSize}}<br/>
 **Language**: {{language}}<br/>
 
 **Pre-packed Groceries**: {{groceryList}}<br/>
-**Custom Shopping Items**: {{otherItems}}<br/>
-**Warehouse Specialty Items**: {{warehouseSpecialtyItems}}<br/>
 **Neighbor can meet outside**: {{canMeetOutside}}<br/>
 {{#deliveryNotes}}**Notes for Delivery**: {{.}}<br/>{{/deliveryNotes}}
 

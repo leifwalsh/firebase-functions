@@ -51,6 +51,27 @@ const INTAKE_SCHEMA = {
   canMeetOutside: 'Can meet outside',
 };
 
+const HOLIDAY_INTAKE_SCHEMA = {
+  ticketID: 'Ticket ID',
+  status: STATUS,
+  intakeVolunteer: 'Intake Volunteer - This is you!',
+  deliveryVolunteer: 'Delivery Volunteer',
+  neighborhood: 'Neighborhood',
+  requestName: 'Requestor First Name and Last Initial',
+  nearestIntersection: 'Nearest Intersection',
+  language: 'Language',
+  address: 'Address (won\'t post in Slack)',
+  phoneNumber: 'Phone Number',
+  householdSize: 'Household Size',
+  deliveryNotes: 'Notes for Delivery Volunteer (won\'t post in Slack)',
+  dateCreated: 'Date Created',
+  deliveryDate: 'Delivery Date',
+  bulkRoute: 'Holiday Delivery Routes',
+  deliveryVolunteerRecordID: 'Delivery Volunteer Record ID',
+  canMeetOutside: 'Can meet outside',
+  porkOrTurkey: 'Pork Shoulder or Turkey?'
+};
+
 const BULK_DELIVERY_STATUSES = ['Bulk Delivery Scheduled', 'Bulk Delivery Confirmed'];
 
 const REIMBURSEMENT_SCHEMA = {
@@ -118,6 +139,19 @@ const BULK_DELIVERY_ROUTES_SCHEMA = {
   shoppingVolunteerName: 'Shopping Volunteer Name',
 };
 
+const HOLIDAY_DELIVERY_ROUTES_SCHEMA = {
+  name: 'Name',
+  intakeTickets: 'Intake Tickets',
+  deliveryVolunteer: 'Delivery Volunteer',
+  deliveryVolunteerEmail: 'Delivery Volunteer Email Address',
+  deliveryVolunteerName: 'Delivery Volunteer Name',
+  deliveryDate: 'Delivery Date',
+  arrivalTime: 'Warehouse Arrival Time',
+  shoppingVolunteer: 'Shopping Volunteer',
+  shoppingVolunteerEmail: 'Shopping Volunteer Email Address',
+  shoppingVolunteerName: 'Shopping Volunteer Name',
+};
+
 const ITEM_DIRECTORY_SCHEMA = {
   name: 'Name',
   category: 'Category',
@@ -164,11 +198,13 @@ const denormalize = (object, schema) => {
 
 module.exports = {
   BULK_DELIVERY_ROUTES_SCHEMA,
+  HOLIDAY_DELIVERY_ROUTES_SCHEMA,
   BULK_DELIVERY_STATUSES,
   BULK_ORDER_SCHEMA,
   INBOUND_SCHEMA,
   INBOUND_STATUSES,
   INTAKE_SCHEMA,
+  HOLIDAY_INTAKE_SCHEMA,
   ITEMS_BY_HOUSEHOLD_SIZE_SCHEMA,
   ITEM_DIRECTORY_SCHEMA,
   META,

@@ -10,6 +10,8 @@ const {
   reconcileOrders,
   // eslint-disable-next-line no-unused-vars
   ReconciledOrder,
+  getAllHolidayRoutes,
+  getTicketsForHolidayRoute,
 } = require('../airtable');
 
 const generalCategories = ['Non-perishable', 'Produce'];
@@ -17,99 +19,33 @@ const generalCategories = ['Non-perishable', 'Produce'];
 /**
  * Render one packing slip for this order.
  * @param {ReconciledOrder} order Reconciled order
- * @param {string | null} singleCategory Render one category, or all others
- * @param {number} slipNumber Which slip number this is
  * @returns {string} markdown for this packing slip
  */
-function renderPackingSlip(order, singleCategory, slipNumber) {
-  const itemGroups = order.bulkPurchasedItemsByGroup();
+function renderPackingSlip(fields) {
+  let markdown = `# **${_.trim(fields.ticketID)}** (Route ${fields.bulkDeliveryRoute.name}): ${fields.requestName} (${fields.nearestIntersection.trim()})\n\n`;
+  markdown += `**Delivery**: ${fields.bulkDeliveryRoute.deliveryVolunteerName}\n\n`;
+  markdown += `**Household Size**: ${fields.householdSize}\n\n`;
 
-  const fields = order.intakeRecord[1];
+  const groceryList = _.concat(
+    (_.includes(['Turkey', 'Pork Shoulder'], fields.porkOrTurkey) ? [`1 ${fields.porkOrTurkey}`] : []),
+    [
+      '1 Dessert',
+      '1 bottle Cooking Oil',
+      '1 Mayo Squeeze Bottle',
+      '1 pack Dinner Rolls',
+      '1 package Baked Beans',
+      '1 package Turkey Gravy',
+      '1 package Cranberry Sauce',
+      '1 package Dry Split Peas',
+      '1 package Macaroni Pasta',
+      'Potatoes',
+    ],
+    [(fields.householdSize > 4 ? '2 Produce Boxes' : '1 Produce Box')],
+  );
 
-  let markdown = `# **${_.trim(fields.ticketID)}** (Route ${order.bulkDeliveryRoute.name}): ${fields.requestName} (${fields.nearestIntersection.trim()})\n\n`;
-
-  markdown += `**Delivery**: ${order.volunteer.Name}\n\n`;
-  markdown += `**Sheet**: ${slipNumber + 1}/3\n\n`;
-
-  const categorySet = singleCategory === 'General' ? generalCategories : [singleCategory];
-
-  const renderTable = (groups, categories) => {
-    const categoryItems = _.sortBy(
-      _.concat(..._.map(categories, (category) => groups[category] || [])),
-      (item) => {
-        return _.toNumber(order.itemToCategory[item[0]].order);
-      }
-    );
-    const columns = (singleCategory === 'General') ? ([
-      [singleCategory, _.take(categoryItems, _.ceil(categoryItems.length / 2))],
-      [`${singleCategory} (cont.)`, _.drop(categoryItems, _.ceil(categoryItems.length / 2))]
-    ]) : (_.map(categories, (category) => {
-      return [category, groups[category]];
-    }));
-    const numRows = _.max(
-      _.map(columns, ([, items]) => {
-        return items ? items.length : 0;
-      })
-    );
-    markdown += '| ';
-    _.forEach(columns, ([category,]) => {
-      markdown += ` ${category} |`;
-    });
-    markdown += '\n';
-    _.forEach(columns, () => {
-      markdown += ' --- |';
-    });
-    for (var i = 0; i < numRows; i++) {
-      markdown += '\n|';
-      // eslint-disable-next-line no-loop-func
-      _.forEach(columns, ([, items]) => {
-        if (items === undefined || i >= items.length) {
-          markdown += ' &nbsp; |';
-        } else {
-          markdown += ` ${items[i][1]} ${items[i][0]} |`;
-        }
-      });
-    }
-    markdown += '\n';
-  };
-  renderTable(itemGroups, categorySet);
-
-  if (singleCategory === 'General' && (!_.isNull(fields.otherItems) || !_.isNull(fields.warehouseItems) || !_.isEqual(order.provided, order.requested))) {
-    /**
-     * @param {[{ item: string, quantity: number | null }]} items List of
-     * items to purchase.
-     */
-    const renderOtherTable = (title, items) => {
-      const numCols = 2;
-      const numRows = _.ceil(items.length / 2.0);
-      const itemsDescendingLength = _.sortBy(items, ({ item }) => {
-        return -item.length;
-      });
-      markdown += `| ${title} |\n| --- |`;
-      for (var row = 0; row < numRows; row++) {
-        markdown += '\n|';
-        for (var col = 0; col < numCols; col++) {
-          const i = row + col * numRows;
-          if (i >= items.length) {
-            markdown += ' &nbsp; |';
-          } else {
-            markdown += ` ${itemsDescendingLength[i].quantity || ''} ${itemsDescendingLength[i].item} |`;
-          }
-        }
-      }
-      markdown += '\n';
-    };
-
-    const otherItems = order.getAdditionalItems();
-    if (otherItems.length > 0) {
-      markdown += '\n---\n';
-      renderOtherTable('Other Items', otherItems);
-    }
-    const warehouseItems = order.getWarehouseItems();
-    if (warehouseItems.length > 0) {
-      markdown += '\n---\n';
-      renderOtherTable('Warehouse Items', warehouseItems);
-    }
+  markdown += '## Grocery List\n\n';
+  for (const item of groceryList) {
+    markdown += `- ${item}\n`;
   }
 
   return markdown;
@@ -132,32 +68,33 @@ async function savePackingSlips(orders) {
   const PDF = markdownpdf({
     paperFormat: 'A3',
     cssPath: 'functions/scripts/packing-slips.css',
-    paperOrientation: 'portait',
+    paperOrientation: 'portrait',
   });
 
-  // Three sheets, one with Cleaning Bundle, one Fridge / Frozen, one with
-  // everything else.
-  const sheetCategories = ['General', 'Cleaning Bundle', 'Fridge / Frozen'];
-  const realOrderCategories = _.concat(_.slice(sheetCategories, 1), generalCategories);
-  const outPaths = await Promise.all(_.flatMap(orders, (order) => {
-    const orderCategories = _.keys(order.bulkPurchasedItemsByGroup());
-    const notIncludedCategories = _.filter(orderCategories, (category) => !_.includes(realOrderCategories, category));
-    if (!_.isEmpty(notIncludedCategories)) {
-      const msg = `Some item categories are not accounted for: ${_.join(notIncludedCategories, ', ')}`;
-      console.error(msg);
-      throw new Error(msg);
-    }
-    return _.map(sheetCategories, async (category, i) => {
-      const markdown = renderPackingSlip(order, category, i);
-      const stream = PDF.from.string(markdown);
-      const outPath = `out/${order.intakeRecord[1].ticketID}-${i}.pdf`;
-      // @ts-ignore stream.to.path's callback isn't of the right type for
-      // promisify
-      await util.promisify(stream.to.path)(outPath);
-      return outPath;
-    });
-  }));
-
+  const outPaths = _.flatten(await Promise.all(_.flatMap(orders, async (order) => {
+    const tickets = await Promise.all(getTicketsForHolidayRoute(order));
+    const produceBoxes = _.sum(_.map(tickets, (ticket) => {
+      return ticket[1].householdSize > 4 ? 2 : 1;
+    }));
+    console.log(order[1].name, produceBoxes);
+    const routeMarkdown = `# Route ${order[1].name}\n\n**Delivery:** ${order[1].deliveryVolunteerName}\n\n**Produce Boxes:** ${produceBoxes}\n`;
+    const stream = PDF.from.string(routeMarkdown);
+    const routeOutPath = `out/route-${order[1].name}.pdf`;
+    await util.promisify(stream.to.path)(routeOutPath);
+    return _.concat(
+      [],
+      await Promise.all(_.map(tickets, async (ticket) => {
+        const markdown = renderPackingSlip(Object.assign({}, ticket[1], { bulkDeliveryRoute: order[1] }));
+        const stream = PDF.from.string(markdown);
+        const outPath = `out/${ticket[1].ticketID}.pdf`;
+        // @ts-ignore stream.to.path's callback isn't of the right type for
+        // promisify
+        await util.promisify(stream.to.path)(outPath);
+        return outPath;
+      }
+      ))
+    );
+  })));
   const mergedOutPath = 'out/packing_slips.pdf';
   // @ts-ignore pdfmerge's callback isn't of the right type for promisify
   await util.promisify(pdfmerge)(outPaths, mergedOutPath);
@@ -176,12 +113,11 @@ async function main() {
     describe: 'Date of scheduled delivery (yyyy-mm-dd format)',
   });
 
-  const orders = _.sortBy(await reconcileOrders(argv.deliveryDate), ({ bulkDeliveryRoute }) => {
+  const orders = _.sortBy(await getAllHolidayRoutes(argv.deliveryDate), ([, bulkDeliveryRoute,]) => {
     return _.toNumber(bulkDeliveryRoute.name);
   });
 
   console.log('Creating packing slips...');
-
   const outPath = await savePackingSlips(orders);
   console.log('Wrote packing slips to', outPath);
 }

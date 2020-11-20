@@ -6,7 +6,7 @@ const Mustache = require('mustache');
 const yargs = require('yargs');
 
 // eslint-disable-next-line no-unused-vars
-const { getAllRoutes, getTicketsForRoutes, getRecordsWithFilter, reconcileOrders, BULK_DELIVERY_ROUTES_TABLE, ReconciledOrder } = require('../airtable');
+const { getAllHolidayRoutes, getTicketsForHolidayRoutes, getRecordsWithFilter, reconcileOrders, HOLIDAY_DELIVERY_ROUTES_TABLE, ReconciledOrder } = require('../airtable');
 const { googleMapsUrl, Email } = require('../messages');
 
 // Each week we might need custom shoppers to do some "bulk purchases" if we
@@ -32,25 +32,6 @@ const itemNeedsCustomShopping = ({ item }) => {
   );
 };
 
-const getShoppingListTemplateParameters = (route, orders) => {
-  const allTickets = _.map(orders, (order) => {
-    const { ticketID, vulnerability, householdSize } = order.intakeRecord[1];
-    const conditions = _.concat([`household size ${householdSize}`], vulnerability);
-    const items = _.filter(order.getAdditionalItems(), itemNeedsCustomShopping);
-    return { ticketID, conditions: _.join(conditions, ', '), items };
-  });
-  const tickets = _.filter(allTickets, ({ items }) => {
-    return items.length > 0;
-  });
-  const params = {
-    tickets
-  };
-  if (!_.isEmpty(noRouteSection.items)) {
-    params.noRouteSection = noRouteSection;
-  }
-  return params;
-};
-
 /**
  * Construct the mustache template parameter map.
  * @param {Object} route route fields
@@ -58,27 +39,28 @@ const getShoppingListTemplateParameters = (route, orders) => {
  */
 function getEmailTemplateParameters(route, orders) {
   const ticketParameterMaps = orders.map((order) => {
-    const { intakeRecord: [, ticket,] } = order;
-    const additionalItems = order.getAdditionalItems();
-    const shoppingItems = _.map(
-      additionalItems,
-      ({ item, quantity }) => {
-        return `${quantity || ''} ${item}`.trim();
-      }
-    );
-    const warehouseSpecialtyItems = _.map(
-      order.getWarehouseItems(),
-      ({ item, quantity }) => {
-        return `${quantity || ''} ${item}`.trim();
-      }
-    );
+    const [, ticket,] = order;
+    const groceryList = _.join(
+      _.concat(
+        (_.includes(['Turkey', 'Pork Shoulder'], ticket.porkOrTurkey) ? [`1 ${ticket.porkOrTurkey}`] : []),
+        [
+          '1 Dessert',
+          '1 bottle Cooking Oil',
+          '1 Mayo Squeeze Bottle',
+          '1 pack Dinner Rolls',
+          '1 package Baked Beans',
+          '1 package Turkey Gravy',
+          '1 package Cranberry Sauce',
+          '1 package Dry Split Peas',
+          '1 package Macaroni Pasta',
+          'Potatoes',
+        ],
+        [(ticket.householdSize > 4 ? '2 Produce Boxes' : '1 Produce Box')],
+      ), ', ');
     return Object.assign({}, ticket, {
       phoneNumberNumbersOnly: _.replace(ticket.phoneNumber, /[^0-9]/g, ''),
       mapsUrl: googleMapsUrl(_.trim(ticket.address)),
-      vulnerabilities: _.join(ticket.vulnerability, ', '),
-      groceryList: _.join(ticket.foodOptions, ', '),
-      otherItems: _.join(shoppingItems, ', '),
-      warehouseSpecialtyItems: _.join(warehouseSpecialtyItems, ', '),
+      groceryList,
     });
   });
   return {
@@ -86,7 +68,7 @@ function getEmailTemplateParameters(route, orders) {
     deliveryDateString: moment(route.deliveryDate).utc().format('MMMM Do'),
     firstName: route.deliveryVolunteerName[0].split(' ')[0],
     routeName: route.name,
-    ticketIDs: _.join(_.map(orders, ({ intakeRecord: [, fields,]}) => {
+    ticketIDs: _.join(_.map(orders, ([, fields,]) => {
       return fields.ticketID;
     }), ', '),
     warehouseMapsUrl: googleMapsUrl('221 Glenmore Ave'),
@@ -94,7 +76,6 @@ function getEmailTemplateParameters(route, orders) {
     warehouseCoordinatorPhone1: functions.config().bulk_ops_team.warehouse_coordinator1.phone_number,
     warehouseCoordinatorPhone2: functions.config().bulk_ops_team.warehouse_coordinator2.phone_number,
     tickets: ticketParameterMaps,
-    shoppingList: getShoppingListTemplateParameters(route, orders),
   };
 }
 
@@ -114,24 +95,13 @@ async function main() {
     .boolean('dryRun');
 
   const routes = argv.route ? (
-    await getRecordsWithFilter(BULK_DELIVERY_ROUTES_TABLE, { deliveryDate: argv.deliveryDate, name: argv.route })
-  ) : await getAllRoutes(argv.deliveryDate);
-
-  const orders = await reconcileOrders(argv.deliveryDate, routes);
-
-  const ordersByKey = _.fromPairs(
-    _.map(orders, (order) => {
-      return [order.intakeRecord[0], order];
-    })
-  );
+    await getRecordsWithFilter(HOLIDAY_DELIVERY_ROUTES_TABLE, { deliveryDate: argv.deliveryDate, name: argv.route })
+  ) : await getAllHolidayRoutes(argv.deliveryDate);
 
   const templateParameterMaps = await Promise.all(_.map(routes, async (route) => {
-    const ticketRecords = await getTicketsForRoutes([route]);
+    const ticketRecords = await getTicketsForHolidayRoutes([route]);
     const [, routeFields,] = route;
-    const orders = _.map(ticketRecords, ([ticketKey,]) => {
-      return ordersByKey[ticketKey];
-    });
-    return getEmailTemplateParameters(routeFields, orders);
+    return getEmailTemplateParameters(routeFields, ticketRecords);
   }));
 
   const emailTemplateFilename = 'functions/templates/bulk-delivery-volunteer-email.md.mustache';
@@ -143,7 +113,7 @@ async function main() {
       to: view.to,
       cc: 'operations+bulk@bedstuystrong.com',
       replyTo: 'operations+bulk@bedstuystrong.com',
-      subject: `[BSS Bulk Ordering] ${view.deliveryDateString} Delivery Prep and Instructions for ${view.firstName}`,
+      subject: `[BSS Bulk Ordering] ${view.deliveryDateString} Holiday Delivery Prep and Instructions for ${view.firstName}`,
     });
   });
 

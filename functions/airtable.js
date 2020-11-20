@@ -8,6 +8,8 @@ const Airtable = require('airtable');
 const {
   BULK_ORDER_SCHEMA,
   BULK_DELIVERY_ROUTES_SCHEMA,
+  HOLIDAY_DELIVERY_ROUTES_SCHEMA,
+  HOLIDAY_INTAKE_SCHEMA,
   INBOUND_SCHEMA,
   INBOUND_STATUSES,
   INTAKE_SCHEMA,
@@ -30,6 +32,7 @@ const base = airtable.base(functions.config().airtable.base_id);
 const INBOUND_TABLE = functions.config().airtable.inbound_table;
 const VOLUNTEER_FORM_TABLE = functions.config().airtable.volunteers_table;
 const INTAKE_TABLE = functions.config().airtable.intake_table;
+const HOLIDAY_INTAKE_TABLE = functions.config().airtable.holiday_intake_table;
 const REIMBURSEMENTS_TABLE = functions.config().airtable.reimbursements_table;
 const META_TABLE = functions.config().airtable.meta_table;
 const ITEMS_BY_HOUSEHOLD_SIZE_TABLE = functions.config().airtable
@@ -37,16 +40,20 @@ const ITEMS_BY_HOUSEHOLD_SIZE_TABLE = functions.config().airtable
 const BULK_ORDER_TABLE = functions.config().airtable.bulk_order_table;
 const BULK_DELIVERY_ROUTES_TABLE = functions.config().airtable
   .bulk_delivery_routes_table;
+const HOLIDAY_DELIVERY_ROUTES_TABLE = functions.config().airtable
+  .holiday_delivery_routes_table;
 const ITEM_DIRECTORY_TABLE = functions.config().airtable.item_directory_table;
 
 const TABLE_SCHEMAS = {
   [INBOUND_TABLE]: INBOUND_SCHEMA,
   [INTAKE_TABLE]: INTAKE_SCHEMA,
+  [HOLIDAY_INTAKE_TABLE]: HOLIDAY_INTAKE_SCHEMA,
   [VOLUNTEER_FORM_TABLE]: VOLUNTEER_SCHEMA,
   [REIMBURSEMENTS_TABLE]: REIMBURSEMENT_SCHEMA,
   [ITEMS_BY_HOUSEHOLD_SIZE_TABLE]: ITEMS_BY_HOUSEHOLD_SIZE_SCHEMA,
   [BULK_ORDER_TABLE]: BULK_ORDER_SCHEMA,
   [BULK_DELIVERY_ROUTES_TABLE]: BULK_DELIVERY_ROUTES_SCHEMA,
+  [HOLIDAY_DELIVERY_ROUTES_TABLE]: HOLIDAY_DELIVERY_ROUTES_SCHEMA,
 };
 
 /* GENERAL */
@@ -373,6 +380,31 @@ async function getAllRoutes(deliveryDate) {
 }
 
 /**
+ * Get all Holiday Delivery Route records for this week.
+ * @param {Date} deliveryDate Date this bulk delivery will go out.
+ * @return {Promise<[string, Object, Object][]>} List of route records.
+ */
+async function getAllHolidayRoutes(deliveryDate) {
+  const allRoutes = await getRecordsWithFilter(HOLIDAY_DELIVERY_ROUTES_TABLE, { deliveryDate });
+  // We are no longer using separate shopping volunteers!
+  /*
+  const routesWithoutShopper = _.filter(allRoutes, ([, fields]) => {
+    return (
+      fields.shoppingVolunteer === null || fields.shoppingVolunteer.length !== 1
+    );
+  });
+  if (routesWithoutShopper.length > 0) {
+    const msg = 'Some routes are missing a shopping volunteer';
+    console.error(msg, _.map(routesWithoutShopper, ([, fields]) => {
+      return fields.name;
+    }));
+    throw new Error(msg);
+  }
+  */
+  return allRoutes;
+}
+
+/**
  * Get all tickets for a route.
  * @param {[string, Object, Object]} param0 One bulk delivery route record.
  * @returns {Promise<[string, Object, Object]>[]} Intake ticket record promises.
@@ -384,11 +416,30 @@ function getTicketsForRoute([, fields]) {
 }
 
 /**
+ * Get all tickets for a holiday route.
+ * @param {[string, Object, Object]} param0 One bulk delivery route record.
+ * @returns {Promise<[string, Object, Object]>[]} Intake ticket record promises.
+ */
+function getTicketsForHolidayRoute([, fields]) {
+  return _.map(fields.intakeTickets, (ticketRef) => {
+    return getRecord(HOLIDAY_INTAKE_TABLE, ticketRef);
+  });
+}
+
+/**
  * Get tickets for all routes.
  * @param {[string, Object, Object][]} allRoutes Bulk delivery route records.
  */
 async function getTicketsForRoutes(allRoutes) {
   return await Promise.all(_.flatMap(allRoutes, getTicketsForRoute));
+}
+
+/**
+ * Get tickets for all routes.
+ * @param {[string, Object, Object][]} allRoutes Bulk delivery route records.
+ */
+async function getTicketsForHolidayRoutes(allRoutes) {
+  return await Promise.all(_.flatMap(allRoutes, getTicketsForHolidayRoute));
 }
 
 class ReconciledOrder {
@@ -623,9 +674,11 @@ async function storeMeta(key, data) {
 
 module.exports = {
   BULK_DELIVERY_ROUTES_TABLE: BULK_DELIVERY_ROUTES_TABLE,
+  HOLIDAY_DELIVERY_ROUTES_TABLE: HOLIDAY_DELIVERY_ROUTES_TABLE,
   BULK_ORDER_TABLE: BULK_ORDER_TABLE,
   INBOUND_TABLE: INBOUND_TABLE,
   INTAKE_TABLE: INTAKE_TABLE,
+  HOLIDAY_INTAKE_TABLE: HOLIDAY_INTAKE_TABLE,
   ITEMS_BY_HOUSEHOLD_SIZE_TABLE: ITEMS_BY_HOUSEHOLD_SIZE_TABLE,
   ITEM_DIRECTORY_TABLE: ITEM_DIRECTORY_TABLE,
   META_STORE_KEYS: META_STORE_KEYS,
@@ -651,7 +704,10 @@ module.exports = {
   getVolunteerSlackID: getVolunteerSlackID,
   getItemToNumAvailable: getItemToNumAvailable,
   getAllRoutes: getAllRoutes,
+  getAllHolidayRoutes: getAllHolidayRoutes,
   getTicketsForRoutes: getTicketsForRoutes,
+  getTicketsForHolidayRoutes: getTicketsForHolidayRoutes,
+  getTicketsForHolidayRoute: getTicketsForHolidayRoute,
   reconcileOrders: reconcileOrders,
   getVolunteerBySlackID: getVolunteerBySlackID,
   storeMeta: storeMeta,
