@@ -48,6 +48,7 @@ const INTAKE_SCHEMA = {
   warehouseSpecialtyItems: 'Warehouse Specialty Items',
   bulkRoute: 'Bulk Delivery Route',
   deliveryVolunteerRecordID: 'Delivery Volunteer Record ID',
+  canMeetOutside: 'Can meet outside',
 };
 
 const BULK_DELIVERY_STATUSES = ['Bulk Delivery Scheduled', 'Bulk Delivery Confirmed'];
@@ -94,6 +95,7 @@ const ITEMS_BY_HOUSEHOLD_SIZE_SCHEMA = {
   7: '7 Person(s)',
   8: '8 Person(s)',
   9: '9 Person(s)',
+  10: '10 Person(s)',
 };
 
 const BULK_ORDER_SCHEMA = {

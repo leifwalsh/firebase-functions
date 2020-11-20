@@ -74,7 +74,7 @@ function getEmailTemplateParameters(route, orders) {
     );
     return Object.assign({}, ticket, {
       phoneNumberNumbersOnly: _.replace(ticket.phoneNumber, /[^0-9]/g, ''),
-      mapsUrl: googleMapsUrl(ticket.address),
+      mapsUrl: googleMapsUrl(_.trim(ticket.address)),
       vulnerabilities: _.join(ticket.vulnerability, ', '),
       groceryList: _.join(ticket.foodOptions, ', '),
       otherItems: _.join(shoppingItems, ', '),

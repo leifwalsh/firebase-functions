@@ -556,7 +556,7 @@ async function reconcileOrders(deliveryDate, allRoutes) {
     );
 
     const bulkDeliveryRoute = routesByKey[record[1].bulkRoute[0]];
-
+    console.log(record[1]);
     const volunteer = volunteersByKey[record[1].deliveryVolunteer[0]];
 
     orders.push(
